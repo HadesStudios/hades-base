@@ -15,6 +15,7 @@ server_scripts {
     'sh_init.lua',
     'sv_init.lua',
     'sv_config.lua',
+    'server/sv_telemetry.lua',
     'builder/lua/cmds.lua',
     'core/sv_database.js',
     'core/sv_generator.js',

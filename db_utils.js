@@ -14,16 +14,24 @@ function exportDocuments(documents) {
 }
 
 function safeObjectArgument(object) {
-	if (!object) return {};
+	if (object === null || object === undefined) return {};
+
+	// If it's an array, return an empty object — arrays are not valid
+	// for Mongo query/update/options shapes in this wrapper.
 	if (Array.isArray(object)) {
-		return object.reduce((acc, value, index) => {
-			if (index == '_id') acc[index] = mongodb.ObjectID(value);
-			else acc[index] = value;
-			return acc;
-		}, {});
+		return {};
 	}
+
 	if (typeof object !== 'object') return {};
-	if (object._id) object._id = mongodb.ObjectID(object._id);
+
+	if (object._id) {
+		try {
+			object._id = mongodb.ObjectID(object._id);
+		} catch (e) {
+			// leave as-is if conversion fails
+		}
+	}
+
 	return object;
 }
 

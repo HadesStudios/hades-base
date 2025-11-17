@@ -312,8 +312,12 @@ const Methods = {
 		if (!collection)
 			return Log(`find: Invalid collection "${params.collection}"`);
 
-		const query = utils.safeObjectArgument(params.query);
-		const options = utils.safeObjectArgument(params.options);
+		let query = utils.safeObjectArgument(params.query);
+		let options = utils.safeObjectArgument(params.options);
+
+		// Ensure query/options are plain objects for the Mongo driver
+		if (Array.isArray(query) || typeof query !== 'object') query = {};
+		if (Array.isArray(options) || typeof options !== 'object') options = {};
 
 		let cursor = collection.find(query, options);
 		if (params.limit) cursor = cursor.limit(params.limit);
@@ -345,6 +349,20 @@ const Methods = {
 
 		query = utils.safeObjectArgument(params.query);
 		update = utils.safeObjectArgument(params.update);
+
+		// Guard against arrays accidentally being passed as the update
+		if (Array.isArray(params.update) || Array.isArray(update)) {
+			Log(`update [${params.collection}]: Invalid update object (array passed).`);
+			utils.safeCallback(callback, false, 'Invalid update object (array)');
+			return;
+		}
+
+		// Guard against empty update objects which cause Mongo errors
+		if (!update || (typeof update === 'object' && Object.keys(update).length === 0)) {
+			Log(`update [${params.collection}]: Invalid update object (empty).`);
+			utils.safeCallback(callback, false, 'Invalid update object');
+			return;
+		}
 		options = utils.safeObjectArgument(params.options);
 
 		const cb = (err, res) => {
@@ -398,8 +416,11 @@ const Methods = {
 		if (!collection)
 			return Log(`count: Invalid collection "${params.collection}"`);
 
-		const query = utils.safeObjectArgument(params.query);
-		const options = utils.safeObjectArgument(params.options);
+		let query = utils.safeObjectArgument(params.query);
+		let options = utils.safeObjectArgument(params.options);
+
+		if (Array.isArray(query) || typeof query !== 'object') query = {};
+		if (Array.isArray(options) || typeof options !== 'object') options = {};
 
 		collection.countDocuments(query, options, (err, count) => {
 			if (err) {
@@ -423,6 +444,12 @@ const Methods = {
 
 		query = utils.safeObjectArgument(params.query);
 		update = utils.safeObjectArgument(params.update);
+
+		if (!update || (typeof update === 'object' && Object.keys(update).length === 0)) {
+			Log(`findOneAndUpdate [${params.collection}]: Invalid update object (empty).`);
+			utils.safeCallback(callback, false, 'Invalid update object');
+			return;
+		}
 		options = utils.safeObjectArgument(params.options);
 
 		const cb = (err, res) => {
@@ -448,7 +475,9 @@ const Methods = {
 		let collection = getParamsCollection(db, params);
 		if (!collection)
 			return Log(`aggregate: Invalid collection "${params.collection}"`);
-		let cursor = collection.aggregate(params.aggregate);
+		// Ensure aggregate pipeline is an array
+		let pipeline = Array.isArray(params.aggregate) ? params.aggregate : [];
+		let cursor = collection.aggregate(pipeline);
 		cursor.toArray((err, documents) => {
 			if (err) {
 				Log(

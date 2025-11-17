@@ -3,8 +3,14 @@
     "version": "1.0.0",
     "main": "./core/sv_database.js",
     "license": "MIT",
+    "scripts": {
+        "start:telemetry": "node server/telemetry_api.js"
+    },
     "dependencies": {
         "faker": "^5.5.3",
-        "mongodb": "^3.6.6"
+        "mongodb": "^3.6.6",
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5"
     }
 }
